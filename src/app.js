@@ -22,18 +22,7 @@ console.log("Allowed CORS origins:", allowedOrigins);
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (Postman, Railway health checks, etc.)
-      if (!origin) return callback(null, true);
-      // Strip trailing slash from incoming origin for comparison
-      const cleanOrigin = origin.replace(/\/$/, "");
-      if (allowedOrigins.includes(cleanOrigin)) {
-        callback(null, true);
-      } else {
-        console.warn("Blocked by CORS:", origin);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
+    origin: true,
     credentials: true,
   })
 );
