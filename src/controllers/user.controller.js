@@ -25,7 +25,10 @@ export const getTarget = async (req, res) => {
     });
     res.json({
       targetHarian: user.targetHarian || null,
-      targetMingguan: user.targetMingguan || Array(7).fill(null),
+      // Pastikan selalu return array 7 elemen
+      targetMingguan: Array.isArray(user.targetMingguan)
+        ? user.targetMingguan
+        : Array(7).fill(null),
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -35,9 +38,21 @@ export const getTarget = async (req, res) => {
 export const updateTarget = async (req, res) => {
   try {
     const { targetHarian, targetMingguan } = req.body;
+
+    // BUG FIX: Prisma schema targetHarian adalah Int? — harus integer, bukan float/string
+    const targetHarianInt = targetHarian ? parseInt(targetHarian, 10) : null;
+
+    // BUG FIX: targetMingguan adalah Json? — pastikan array 7 elemen dengan nilai Int atau null
+    const targetMingguanClean = Array.isArray(targetMingguan)
+      ? targetMingguan.map(v => (v != null ? parseInt(v, 10) : null))
+      : Array(7).fill(null);
+
     const user = await prisma.user.update({
       where: { id: req.user.id },
-      data: { targetHarian, targetMingguan },
+      data: {
+        targetHarian: targetHarianInt,
+        targetMingguan: targetMingguanClean,
+      },
       select: { targetHarian: true, targetMingguan: true },
     });
     res.json(user);
