@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              Int          @id @default(autoincrement())
+  name            String
+  email           String       @unique
+  password        String
+  birthday        String?
+  gender          String?
+  height          Float?
+  weight          Float?
+  waterIntake     Int          @default(0)
+  targetHarian    Int?
+  targetMingguan  Json?
+  createdAt       DateTime     @default(now())
+  trackings       Tracking[]
+  notifikasis     Notifikasi[]
+}
+
+model Food {
+  id        Int        @id @default(autoincrement())
+  name      String
+  calories  Int
+  carbs     Float      @default(0)
+  protein   Float      @default(0)
+  fat       Float      @default(0)
+  portion   String     @default("1 porsi")
+  createdAt DateTime   @default(now())
+  trackings Tracking[]
+}
+
+model Tracking {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  foodId    Int
+  quantity  Int      @default(1)
+  mealTime  String   @default("Sarapan")
+  createdAt DateTime @default(now())
+  food      Food     @relation(fields: [foodId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Notifikasi {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  judul     String
+  ikon      String   @default("🔔")
+  waktu     String
+  terbaca   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
