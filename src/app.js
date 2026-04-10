@@ -13,37 +13,54 @@ dotenv.config();
 
 const app = express();
 
-// Parse FRONTEND_URL - support comma-separated list, strip trailing slashes
+// 🔥 ambil dari ENV
 const allowedOrigins = process.env.FRONTEND_URL
-  ? process.env.FRONTEND_URL.split(",").map((u) => u.trim().replace(/\/$/, ""))
-  : ["http://localhost:6767"];
+  ? process.env.FRONTEND_URL.split(",").map((u) =>
+      u.trim().replace(/\/$/, "")
+    )
+  : ["http://localhost:5173"];
 
-console.log("Allowed CORS origins:", allowedOrigins);
+console.log("Allowed origins:", allowedOrigins);
 
+// 🔥 FIX CORS PROPER
 app.use(
   cors({
-    origin: true,
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // allow postman / curl
+
+      const cleanOrigin = origin.replace(/\/$/, "");
+
+      if (allowedOrigins.includes(cleanOrigin)) {
+        callback(null, true);
+      } else {
+        console.error("❌ CORS blocked:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
 
-app.options("*", cors()); 
-
 app.use(express.json());
 app.use(passport.initialize());
 
+// routes
 app.use("/auth", authRoutes);
 app.use("/food", foodRoutes);
 app.use("/tracking", trackingRoutes);
 app.use("/user", userRoutes);
 app.use("/notifikasi", notifikasiRoutes);
 
-app.get("/", (req, res) => res.json({ message: "NutriTrack API Running 🚀", status: "ok" }));
+// health check
+app.get("/", (req, res) =>
+  res.json({ message: "NutriTrack API Running 🚀", status: "ok" })
+);
+
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 
-// Global error handler
+// global error handler
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err.message);
+  console.error("🔥 Error:", err.message);
   res.status(500).json({ error: err.message });
 });
 
